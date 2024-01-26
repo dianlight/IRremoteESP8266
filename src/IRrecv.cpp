@@ -2,9 +2,10 @@
 // Copyright 2015 Mark Szabo
 // Copyright 2015 Sebastien Warin
 // Copyright 2017, 2019 David Conran
-
+#if !defined(LIBRETINY)
 #include "IRrecv.h"
 #include <stddef.h>
+
 #ifndef UNIT_TEST
 #if defined(ESP8266)
 extern "C" {
@@ -2077,3 +2078,4 @@ volatile irparams_t *IRrecv::_getParamsPtr(void) {
 }
 #endif  // UNIT_TEST
 // End of IRrecv class -------------------
+#endif // LIBRETINY
