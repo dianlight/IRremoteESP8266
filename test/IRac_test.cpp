@@ -247,6 +247,36 @@ TEST(TestIRac, Coolix) {
   ASSERT_EQ(stdAc::ac_command_t::kControlCommand, r.command);
 }
 
+TEST(TestIRac, Coolix_Issue2103) {
+  IRCoolixAC ac(kGpioUnused);
+  IRac irac(kGpioUnused);
+  IRrecv capture(kGpioUnused);
+  char expected[] =
+      "Power: On, Mode: 4 (Fan), Fan: 5 (Auto), Zone Follow: Off, "
+      "Sensor Temp: Off";
+
+  ac.begin();
+  irac.coolix(&ac,
+              true,                        // Power
+              stdAc::opmode_t::kFan,       // Mode
+              21,                          // Celsius
+              kNoTempValue,                // Sensor Temp
+              stdAc::fanspeed_t::kAuto,    // Fan speed
+              stdAc::swingv_t::kOff,       // Vertical swing
+              stdAc::swingh_t::kOff,       // Horizontal swing
+              false,                       // iFeel
+              false,                       // Turbo
+              false,                       // Light
+              false,                       // Clean
+              -1);                         // Sleep
+  ASSERT_EQ(expected, ac.toString());
+  ac._irsend.makeDecodeResult();
+  EXPECT_TRUE(capture.decode(&ac._irsend.capture));
+  ASSERT_EQ(COOLIX, ac._irsend.capture.decode_type);
+  ASSERT_EQ(kCoolixBits, ac._irsend.capture.bits);
+  ASSERT_EQ(expected, IRAcUtils::resultAcToString(&ac._irsend.capture));
+}
+
 TEST(TestIRac, Corona) {
   IRCoronaAc ac(kGpioUnused);
   IRac irac(kGpioUnused);
@@ -2158,8 +2188,8 @@ TEST(TestIRac, Toshiba) {
   IRac irac(kGpioUnused);
   IRrecv capture(kGpioUnused);
   char expected[] =
-      "Temp: 29C, Power: On, Mode: 2 (Dry), Fan: 2 (UNKNOWN), "
-      "Turbo: Off, Econo: On, Filter: Off";
+      "Model: 0 (TOSHIBA REMOTE A), Temp: 29C, Power: On, Mode: 2 (Dry), "
+      "Fan: 2 (UNKNOWN), Turbo: Off, Econo: On, Filter: Off";
 
   ac.begin();
   irac.toshiba(&ac,
@@ -3145,8 +3175,8 @@ TEST(TestIRac, Issue1250) {
 
   // Now send the state so we can actually decode/capture what we sent.
   char expected_on[] =
-      "Temp: 19C, Power: On, Mode: 4 (Fan), Fan: 0 (Auto), "
-      "Turbo: Off, Econo: Off, Filter: Off";
+      "Model: 0 (TOSHIBA REMOTE A), Temp: 19C, Power: On, Mode: 4 (Fan), "
+      "Fan: 0 (Auto), Turbo: Off, Econo: Off, Filter: Off";
   ac._irsend.reset();
   irac.toshiba(&ac,
                irac.next.power,     // Power
@@ -3172,8 +3202,8 @@ TEST(TestIRac, Issue1250) {
   irac.sendAc();
   // Now send the state so we can actually decode/capture what we sent.
   char expected_off[] =
-      "Temp: 19C, Power: Off, Fan: 0 (Auto), Turbo: Off, Econo: Off, "
-      "Filter: Off";
+      "Model: 0 (TOSHIBA REMOTE A), Temp: 19C, Power: Off, Fan: 0 (Auto), "
+      "Turbo: Off, Econo: Off, Filter: Off";
   ac._irsend.reset();
   irac.toshiba(&ac,
                irac.next.power,     // Power
